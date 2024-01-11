@@ -1,0 +1,22 @@
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: /data/AIDATA/raw_data/2F-DATASET/Pallet/wood  # dataset root dir
+train:
+  - color_jitter_wood1_20231213_110211_yolo_20231214/images/train  # train images (relative to 'path') 128 images
+  - color_jitter_wood2_120231213_110631_yolo_20231214/images/train
+  - color_jitter_wood3_320231213_111001_yolo_20231214/images/train
+  - color_jitter_wood4_20231213_134855_video_97_yolo_20231214/images/train
+  - wood1_20231213_110211_yolo_20231214/images/train
+  - wood2_120231213_110631_yolo_20231214/images/train
+  - wood3_320231213_111001_yolo_20231214/images/train
+  - wood4_20231213_134855_video_97_yolo_20231214/images/train
+
+val:
+  - color_jitter_wood1_20231213_110211_yolo_20231214/images/val  # train images (relative to 'path') 128 images
+  - color_jitter_wood2_120231213_110631_yolo_20231214/images/val
+  - color_jitter_wood3_320231213_111001_yolo_20231214/images/val
+  - color_jitter_wood4_20231213_134855_video_97_yolo_20231214/images/val
+
+# Classes
+names:
+  0: front
+  1: hole
