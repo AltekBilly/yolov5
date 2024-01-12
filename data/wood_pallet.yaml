@@ -1,14 +1,8 @@
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-<<<<<<< HEAD
-path: D:\billy\dataset\Pallet\wood  # dataset root dir
-train: images\train
-val: images\val
-
-=======
 path: /home/BillyHsueh/dataset/Pallet/wood #/data/AIDATA/raw_data/2F-DATASET/Pallet/wood  # dataset root dir
 train: images/train
 val: images/val
->>>>>>> 6a6b92e8c0f2140e1801a3ac43f97c22c9341824
+
 # Classes
 names:
   0: front
