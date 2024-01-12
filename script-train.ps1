@@ -9,11 +9,11 @@ param (
         dataset    = "wood_pallet"
         hyp_name   = "altek"
         env_name   = "yolov5"
-        proj_name  = "test"
-        weights    = " "
-        epochs     = 300
+        proj_name  = "test2"
+        weights    = "D:\billy\repo\yolov5\runs\test1\yolov5altek-wood_pallet-20240111-altek\weights\best.pt"
+        epochs     = 600
         imgsz      = 640
-        batch_size = 32
+        batch_size = 64
         evolve     = 0
         workers    = 8
     }
@@ -53,7 +53,7 @@ function RunPython ([hashtable]$params)
         --project    $params["project"] `
         --name       $params["name"] `
         --exist-ok `
-        # --resume     $($params["project"] + "\yolov5ns-seg-proto4-Whiteboard-33000-small-20230914-noise\weights\last.pt")
+        # --resume     $($params["project"] + "\yolov5altek-wood_pallet-20240111-altek\weights\last.pt")
         # --rect `
         # --no-overlap `
         
