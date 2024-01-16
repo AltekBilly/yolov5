@@ -22,17 +22,17 @@ root="/home/BillyHsueh/repo/yolov5"
 # script
 weights=""
 cfg="${root}/models/yolov5altek.yaml"
-data="${root}/data/wood_pallet.yaml"
+data="/home/BillyHsueh/dataset/face/face.yaml" #"${root}/data/wood_pallet.yaml"
 hyp="${root}/data/hyps/hyp.altek.yaml"
-epochs=300
-batch_size=32
+epochs=600
+batch_size=64
 img_size=640
 cache="ram" # ram/disk
 device="2"
-workers=1
-name="test"
+workers=4
+name="face-lr_0.001"
 exist_ok=true
-patience=50
+patience=100
 
 if [ "$exist_ok" = true ]; then
     exist_ok="--exist-ok"
@@ -44,6 +44,7 @@ python train.py \
         --weights    "${weights}" \
         --cfg        "${cfg}" \
         --data       "${data}" \
+        --hyp        "${hyp}" \
         --epochs     "${epochs}" \
         --batch-size "${batch_size}" \
         --img-size   "${img_size}" \
