@@ -469,3 +469,4 @@ if __name__ == "__main__":
     # (+) -> add by billy
     model.info(img_size=opt.img_size)
     # <- (+) add by billy
+    

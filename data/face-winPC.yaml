@@ -1,0 +1,5 @@
+names:
+  0: face
+path: D:/billy/dataset/face
+train: D:/billy/dataset/face/train.txt
+val: D:/billy/dataset/face/val.txt

@@ -1,0 +1,6 @@
+path: D:/billy/dataset/wider_face_yolo/
+train: sample.txt
+val: sample.txt
+
+names:
+  0: face

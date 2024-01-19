@@ -843,16 +843,16 @@ def run(**kwargs):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    opt.weights = " "
-    opt.cfg = "./models/yolov5altek.yaml"
-    opt.data = "/home/BillyHsueh/dataset/face/face.yaml"
-    opt.hyp = "./data/hyps/hyp.altek.yaml"
-    opt.epochs = 600 
-    opt.batch_size = 8
-    opt.img_size = 640
-    opt.device = "2"   
-    opt.workers = 4
-    opt.name = "face-lr_0.001"
-    opt.exist_ok = True
-    opt.patience = 100 
+    # opt.weights = " "
+    # opt.cfg = "./models/yolov5altek.yaml"
+    # opt.data = "/home/BillyHsueh/dataset/face/face.yaml"
+    # opt.hyp = "./data/hyps/hyp.altek.yaml"
+    # opt.epochs = 600 
+    # opt.batch_size = 8
+    # opt.img_size = 640
+    # opt.device = "2"   
+    # opt.workers = 4
+    # opt.name = "face-lr_0.001"
+    # opt.exist_ok = True
+    # opt.patience = 100 
     main(opt)

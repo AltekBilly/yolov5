@@ -6,15 +6,14 @@ param (
     $TrainingParams = 
     @{
         model      = "yolov5altek"
-        dataset    = "wood_pallet"
-        hyp_name   = "altek"
+        dataset    = "wider_face_yolo-sample-winPC"
+        hyp_name   = "altek-lr0.0005"
         env_name   = "yolov5"
-        proj_name  = "yolov5_m1"
-        name       = "rl0.0005"
-        weights    = "D:\billy\repo\yolov5\runs\yolov5_m1_rl0.001\yolov5altek-wood_pallet-20240112-altek\weights\best.pt"
-        epochs     = 600
-        imgsz      = 640
-        batch_size = 64
+        proj_name  = "yolov5_face_m1"
+        weights    = "D:\billy\repo\yolov5\runs\yolov5_face_m1\yolov5altek-wider_face_yolo-sample-winPC-20240119-altek-lr0.001\weights\best.pt"
+        epochs     = 1000
+        imgsz      = 160
+        batch_size = 256
         evolve     = 0
         workers    = 8
     }
