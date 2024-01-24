@@ -436,7 +436,7 @@ if __name__ == "__main__":
     parser.add_argument("--line-profile", action="store_true", help="profile model speed layer by layer")
     parser.add_argument("--test", action="store_true", help="test all yolo*.yaml")
     # (+) -> add by billy
-    parser.add_argument("--img-size", type=int, default=640, help="input size")
+    parser.add_argument("--img-size", type=int, default=160, help="input size")
     # <- (+) add by billy
     opt = parser.parse_args()
     opt.cfg = check_yaml(opt.cfg)  # check YAML
