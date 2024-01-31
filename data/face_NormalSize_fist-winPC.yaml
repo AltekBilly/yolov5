@@ -1,0 +1,9 @@
+names:
+  0: face
+path: D:/billy/dataset/face/NormalSize
+train: 
+  - D:/billy/dataset/face/NormalSize/train.txt
+  - D:/billy/dataset/face/fist/fist_train.txt
+val: 
+  - D:/billy/dataset/face/NormalSize/val.txt
+  - D:/billy/dataset/face/fist/fist_val.txt

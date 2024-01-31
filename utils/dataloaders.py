@@ -815,7 +815,11 @@ class LoadImagesAndLabels(Dataset):
             if fn.exists():  # load npy
                 im = np.load(fn)
             else:  # read image
+                # (+/-) -> modfiy by billy
                 im = cv2.imread(f)  # BGR
+                # im = cv2.imread(f, cv2.IMREAD_GRAYSCALE)  # gray
+                # im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+                # <- (+/-) modfiy by billy
                 assert im is not None, f"Image Not Found {f}"
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio

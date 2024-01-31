@@ -1,0 +1,5 @@
+names:
+  0: face
+path: D:/billy/dataset/face/NormalSize
+train: D:/billy/dataset/face/NormalSize/origin_train.txt
+val: D:/billy/dataset/face/NormalSize/origin_val.txt
