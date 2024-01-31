@@ -456,6 +456,10 @@ class LoadStreams:
             if n % self.vid_stride == 0:
                 success, im = cap.retrieve()
                 if success:
+                    # (+) -> add by billy: color to gray
+                    # im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY) 
+                    # im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+                    # <- (+) add by billy
                     self.imgs[i] = im
                 else:
                     LOGGER.warning("WARNING ⚠️ Video stream unresponsive, please check your IP camera connection.")
