@@ -1,0 +1,7 @@
+names:
+  0: face
+path: D:/billy/dataset/face/NormalSize
+train: 
+  - D:/billy/dataset/face/NormalSize/list_FDDB.txt
+val: 
+  - D:/billy/dataset/face/NormalSize/val.txt

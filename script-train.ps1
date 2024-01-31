@@ -6,14 +6,14 @@ param (
     $TrainingParams = 
     @{
         model      = "yolov5altek"
-        dataset    = "face_NormalSize-winPC"
-        hyp_name   = "altek-lr0.005-hsv_h0.5-perspective0.001"
+        dataset    = "face_NormalSize-origin-winPC"
+        hyp_name   = "altek-lr0.01"
         env_name   = "yolov5"
         proj_name  = "yolov5_face_m1"
-        weights    = "D:\billy\repo\yolov5\runs\yolov5_face_m1\yolov5altek-face_NormalSize-winPC-20240124-altek-lr0.01-hsv_h0.5-perspective0.001\weights\best.pt"
-        epochs     = 600
-        imgsz      = 160
-        batch_size = 256
+        weights    = " "#"D:\billy\repo\yolov5\runs\yolov5_face_m1\yolov5altek-face_NormalSize_fist-winPC-20240126-altek-lr0.01-20240125\weights\best.pt"
+        epochs     = 1000
+        imgsz      = 320
+        batch_size = 128
         evolve     = 0
         workers    = 8
     }
@@ -36,7 +36,7 @@ function RunPython ([hashtable]$params)
     $params["data"]    = $($root + "data\" + $params["dataset"] + ".yaml")
     $params["hyp"]     = $($root + "data\hyps\hyp." + $params["hyp_name"] + ".yaml")
     $params["project"] = $($root + "runs\" + $params["proj_name"])
-    $params["name"]    = $($params["model"] + "-" + $params["dataset"] + "-" + $date + "-" + $params["hyp_name"])
+    $params["name"]    = $($params["model"] + "-" + $params["dataset"] + "-" + $date + "-" + $params["hyp_name"] + "-" + $params["imgsz"])
     $params["best"]    = $($params["project"] + "\" + $params["name"] + "\weights\best.pt")
     
     # run python
@@ -53,6 +53,7 @@ function RunPython ([hashtable]$params)
         --project    $params["project"] `
         --name       $params["name"] `
         --exist-ok `
+        --single-cls `
         --noautoanchor `
         # --resume     $($params["project"] + "\yolov5altek-wood_pallet-20240111-altek\weights\last.pt")
         # --rect `
