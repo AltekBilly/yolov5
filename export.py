@@ -584,7 +584,9 @@ def add_tflite_metadata(file, metadata, num_outputs):
         from tflite_support import metadata as _metadata
         from tflite_support import metadata_schema_py_generated as _metadata_fb
 
-        tmp_file = Path("/tmp/meta.txt")
+        # (+/-) -> modify by billy: [Path("/tmp/meta.txt")] -> [Path(file).parent / "temp_meta.txt"]
+        tmp_file = Path(file).parent / "temp_meta.txt" #Path("/tmp/meta.txt")
+        # <- (+/-) modify by billy
         with open(tmp_file, "w") as meta_f:
             meta_f.write(str(metadata))
 
