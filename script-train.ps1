@@ -7,13 +7,13 @@ param (
     @{
         model      = "yolov5altek"
         dataset    = "face_NormalSize-origin-winPC"
-        hyp_name   = "altek-lr0.01"
+        hyp_name   = "altek-lr0.01-no_mosaic"
         env_name   = "yolov5"
         proj_name  = "yolov5_face_m1"
-        weights    = " "#"D:\billy\repo\yolov5\runs\yolov5_face_m1\yolov5altek-face_NormalSize_fist-winPC-20240126-altek-lr0.01-20240125\weights\best.pt"
-        epochs     = 1000
-        imgsz      = 320
-        batch_size = 128
+        weights    = " "#"D:\billy\repo\yolov5\runs\yolov5_face_m1\yolov5altek-face_NormalSize-origin-winPC-20240131-altek-lr0.01-no_mosaic-160\weights\best.pt"
+        epochs     = 600
+        imgsz      = 160
+        batch_size = 256
         evolve     = 0
         workers    = 8
     }
