@@ -1,0 +1,13 @@
+names:
+  0: face
+path: D:/billy/dataset/face/
+train: 
+  - D:/billy/dataset/face/fist/fist_train.txt
+  - D:/billy/dataset/face/NormalSize/face_blur_train.txt
+  - D:/billy/dataset/face/NormalSize/background_train.txt
+  - D:/billy/dataset/face/images_bbox20_train_list.txt
+val: 
+  - D:/billy/dataset/face/NormalSize/face_blur_val.txt
+  - D:/billy/dataset/face/fist/fist_val.txt
+  - D:/billy/dataset/face/NormalSize/background_val.txt
+  - D:/billy/dataset/face/images_bbox20_val_list.txt
