@@ -158,7 +158,7 @@ def export_torchscript(model, im, file, optimize, prefix=colorstr("TorchScript:"
         optimize_for_mobile(ts)._save_for_lite_interpreter(str(f), _extra_files=extra_files)
     else:
         ts.save(str(f), _extra_files=extra_files)
-    return f, None
+    return f, ts
 
 
 @try_export
@@ -196,10 +196,12 @@ def export_onnx(model, im, file, opset, dynamic, simplify, prefix=colorstr("ONNX
     onnx.checker.check_model(model_onnx)  # check onnx model
 
     # Metadata
-    d = {"stride": int(max(model.stride)), "names": model.names}
-    for k, v in d.items():
-        meta = model_onnx.metadata_props.add()
-        meta.key, meta.value = k, str(v)
+    # (-) -> comment-out by billy: for qat
+    #// d = {"stride": int(max(model.stride)), "names": model.names}
+    #// for k, v in d.items():
+    #//     meta = model_onnx.metadata_props.add()
+    #//     meta.key, meta.value = k, str(v)
+    # <- (-) comment-out by billy: for qat
     onnx.save(model_onnx, f)
 
     # Simplify

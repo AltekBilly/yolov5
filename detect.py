@@ -62,9 +62,58 @@ from utils.general import (
     scale_boxes,
     strip_optimizer,
     xyxy2xywh,
+    # (+) -> add by billy
+    check_version, check_yaml, yaml_load,
+    # <- (+) add by billy
 )
 from utils.torch_utils import select_device, smart_inference_mode
 
+# (+) -> add by billy
+yolo5_stride = [32]
+def _make_grid(yolo5_anchors, yolo5_na, nx=20, ny=20, i=0, torch_1_10=check_version(torch.__version__, '1.10.0'), device=torch.device('cpu')):
+    d = device
+    t = torch.float32
+    shape = 1, yolo5_na, ny, nx, 2  # grid shape
+    y, x = torch.arange(ny, device=d, dtype=t), torch.arange(nx, device=d, dtype=t)
+    yv, xv = torch.meshgrid(y, x, indexing='ij') if torch_1_10 else torch.meshgrid(y, x)  # torch>=0.7 compatibility
+    grid = torch.stack((xv, yv), 2).expand(shape) - 0.5  # add grid offset, i.e. y = 2.0 * x - 0.5
+    anchor_grid = (yolo5_anchors[i]).view((1, yolo5_na, 1, 1, 2)).expand(shape)
+    return grid, anchor_grid
+
+def yolo_decode_box_for_one_tensor(x, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc):
+    i=0
+    z = []
+    x = x.permute(0, 3, 1, 2).contiguous()
+    bs, _, ny, nx = x.shape
+    x = x.view(bs, yolo5_na, yolo5_no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
+    if yolo5_grid[i].shape[2:4] != x.shape[2:4]:
+        yolo5_grid[i], yolo5_anchor_grid[i] = _make_grid(yolo5_anchors, yolo5_na, nx, ny, i, device=x.device)
+    xy, wh, conf = x.sigmoid().split((2, 2, yolo5_nc + 1), 4)
+    xy = (xy * 2 + yolo5_grid[i]) * yolo5_stride[i]  # xy
+    wh = (wh * 2) ** 2 * yolo5_anchor_grid[i]  # wh
+    y = torch.cat((xy, wh, conf), 4)
+    z.append(y.view(bs, yolo5_na * nx * ny, yolo5_no))
+
+    return torch.cat(z, 1)
+
+def yolo_decode_box(pred_array, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc, device=torch.device('cpu')):
+    if len(pred_array) <= 0:
+        raise Exception('Prediction model (no decode) array length fail !!')
+
+    z = []  # inference output
+    for i, x in enumerate(pred_array):
+        x = x.to(device) if isinstance(x, torch.Tensor) else torch.from_numpy(x).to(device)
+        bs, _, ny, nx = x.shape
+        x = x.view(bs, yolo5_na, yolo5_no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
+        if yolo5_grid[i].shape[2:4] != x.shape[2:4]:
+            yolo5_grid[i], yolo5_anchor_grid[i] = _make_grid(yolo5_anchors, yolo5_na, nx, ny, i, device=device)
+        xy, wh, conf = x.sigmoid().split((2, 2, yolo5_nc + 1), 4)
+        xy = (xy * 2 + yolo5_grid[i]) * yolo5_stride[i]  # xy
+        wh = (wh * 2) ** 2 * yolo5_anchor_grid[i]  # wh
+        y = torch.cat((xy, wh, conf), 4)
+        z.append(y.view(bs, yolo5_na * nx * ny, yolo5_no))
+    return torch.cat(z, 1)
+# <- (+) add by billy
 
 @smart_inference_mode()
 def run(
@@ -96,6 +145,9 @@ def run(
     half=False,  # use FP16 half-precision inference
     dnn=False,  # use OpenCV DNN for ONNX inference
     vid_stride=1,  # video frame-rate stride
+    # (+) -> add by billy
+    cfg=ROOT /'models/yolov5altek.yaml',
+    # <- (+) add by billy
 ):
     source = str(source)
     save_img = not nosave and not source.endswith(".txt")  # save inference images
@@ -116,6 +168,23 @@ def run(
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
 
+    # (+) -> add by billy
+    yolo5_cfg = check_yaml(cfg)
+    tmp_anchors = yaml_load(yolo5_cfg)['anchors']
+    yolo5_grid = [torch.empty(0) for _ in range(len(tmp_anchors))]  # init grid
+    yolo5_anchor_grid = [torch.empty(0) for _ in range(len(tmp_anchors))]  # init anchor grid
+    yolo5_na = len(tmp_anchors[0]) // 2
+    d = device
+    yolo5_anchors = []
+    for anchor_index in range(0, len(tmp_anchors)):
+        if d.type == 'cpu':
+            yolo5_anchors.append(torch.tensor(tmp_anchors[anchor_index]))
+        else:
+            yolo5_anchors.append(torch.tensor(tmp_anchors[anchor_index]).cuda())
+    yolo5_nc = len(names)
+    yolo5_no = yolo5_nc + 5
+    # <- (+) add by billy
+            
     # Dataloader
     bs = 1  # batch_size
     if webcam:
@@ -154,6 +223,12 @@ def run(
                 pred = [pred, None]
             else:
                 pred = model(im, augment=augment, visualize=visualize)
+            # (+) -> add by billy: decode
+            if isinstance(pred, list) and len(pred) > 0:
+                pred = yolo_decode_box(pred, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc, device=device)
+            else: # ANCHOR - quat tflite
+                pred = yolo_decode_box_for_one_tensor(pred, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc)
+            # <- (+) add by billy
         # NMS
         with dt[2]:
             pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
@@ -306,4 +381,12 @@ def main(opt):
 
 if __name__ == "__main__":
     opt = parse_opt()
+    opt.weights = 'D:/billy/repo/yolov5/runs/yolov5_face_m1/yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160/weights/best.tflite'
+    opt.source = 'D:/billy/dataset/face/images/bald_2__222.jpg'
+    opt.data = 'D:/billy/repo/yolov5/data/face_NormalSize-origin-bg-winPC.yaml'
+    opt.device ='cpu'
+    opt.imgsz = [160, 160]
+    opt.name = 'qat_model_detect'
+    opt.conf_thres = 0.5
+
     main(opt)

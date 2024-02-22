@@ -89,11 +89,18 @@ class Detect(nn.Module):
         self.register_buffer("anchors", torch.tensor(anchors).float().view(self.nl, -1, 2))  # shape(nl,na,2)
         self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
         self.inplace = inplace  # use inplace ops (e.g. slice assignment)
+        self.quant = torch.quantization.QuantStub()     # ANCHOR - qat 
+        self.dequant = torch.quantization.DeQuantStub() # ANCHOR - qat
+        self.do_quant = False                           # ANCHOR - qat
 
     def forward(self, x):
         z = []  # inference output
         for i in range(self.nl):
-            x[i] = self.m[i](x[i])  # conv
+            # (+/-) -> modfiy by billy
+            # x[i] = self.m[i](x[i])  # conv
+            x[i] = self.dequant(self.m[i](self.quant(x[i])))  # ANCHOR - qat conv 
+            if self.do_quant: continue                        # ANCHOR - qat
+            # <- (+/-) modfiy by billy
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
             x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
 
@@ -113,7 +120,13 @@ class Detect(nn.Module):
                     y = torch.cat((xy, wh, conf), 4)
                 z.append(y.view(bs, self.na * nx * ny, self.no))
 
+        if self.do_quant: return x # ANCHOR - qat
         return x if self.training else (torch.cat(z, 1),) if self.export else (torch.cat(z, 1), x)
+
+    # ANCHOR - qat
+    def quant_export(self):
+        self.do_quant = True
+        return self.do_quant
 
     def _make_grid(self, nx=20, ny=20, i=0, torch_1_10=check_version(torch.__version__, "1.10.0")):
         d = self.anchors[i].device
@@ -144,6 +157,12 @@ class Segment(Detect):
 
 
 class BaseModel(nn.Module):
+    # (+) -> add by billy: for qat
+    def __init__(self):
+        super().__init__()
+        self.quant = torch.quantization.QuantStub()     # ANCHOR - qat 
+        self.dequant = torch.quantization.DeQuantStub() # ANCHOR - qat
+    # <- (+) add by billy: for qat
     # YOLOv5 base model
     def forward(self, x, profile=False, visualize=False):
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
@@ -155,7 +174,9 @@ class BaseModel(nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
+            x = x if isinstance(m, Detect) else self.quant(x) # ANCHOR - qat
             x = m(x)  # run
+            x = x if isinstance(m, Detect) else self.dequant(x) # ANCHOR - qat
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
@@ -428,7 +449,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # (+/-) -> modfy by billy: yolov5s.yaml -> yolov5altek.yaml
-    parser.add_argument("--cfg", type=str, default="yolov5altek-20240126.yaml", help="model.yaml")
+    parser.add_argument("--cfg", type=str, default="qat_test.yaml", help="model.yaml")
     # <- (+/-) modfy by billy:
     parser.add_argument("--batch-size", type=int, default=1, help="total batch size for all GPUs")
     parser.add_argument("--device", default="", help="cuda device, i.e. 0 or 0,1,2,3 or cpu")
@@ -469,4 +490,3 @@ if __name__ == "__main__":
     # (+) -> add by billy
     model.info(img_size=opt.img_size)
     # <- (+) add by billy
-    
