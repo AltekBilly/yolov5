@@ -72,19 +72,15 @@ class Conv(nn.Module):
 
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
         super().__init__()
-        # self.quant = torch.quantization.QuantStub()     # ANCHOR - qat 
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
         self.bn = nn.BatchNorm2d(c2)
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
-        # self.dequant = torch.quantization.DeQuantStub() # ANCHOR - qat
 
     def forward(self, x):
         return self.act(self.bn(self.conv(x)))
-        # return self.dequant(self.act(self.bn(self.conv(self.quant(x))))) # ANCHOR - qat 
 
     def forward_fuse(self, x):
         return self.act(self.conv(x))
-        # return self.dequant(self.act(self.conv(self.quant(x)))) # ANCHOR - qat
 
 
 class DWConv(Conv):
@@ -140,11 +136,9 @@ class Bottleneck(nn.Module):
     def __init__(self, c1, c2, shortcut=True, g=1, e=0.5):  # ch_in, ch_out, shortcut, groups, expansion
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
-        # self.quant = torch.quantization.QuantStub()     # ANCHOR - qat 
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c_, c2, 3, 1, g=g)
         self.add = shortcut and c1 == c2
-        # self.dequant = torch.quantization.DeQuantStub() # ANCHOR - qat
         self.qff = FloatFunctional()
         
 
@@ -529,7 +523,10 @@ class DetectMultiBackend(nn.Module):
                 interpreter = Interpreter(model_path=w, experimental_delegates=[load_delegate(delegate)])
             else:  # TFLite
                 LOGGER.info(f"Loading {w} for TensorFlow Lite inference...")
-                interpreter = Interpreter(model_path=w)  # load TFLite model
+                # (-/+) -> modfiy by billy: for get middle layers output of TFLite
+                # interpreter = Interpreter(model_path=w)  # load TFLite model
+                interpreter = Interpreter(model_path=w, experimental_preserve_all_tensors=True)  # load TFLite model
+                # <- (-/+) modfiy by billy
             interpreter.allocate_tensors()  # allocate
             input_details = interpreter.get_input_details()  # inputs
             output_details = interpreter.get_output_details()  # outputs
@@ -640,6 +637,16 @@ class DetectMultiBackend(nn.Module):
                     im = (im / scale + zero_point).astype(np.uint8)  # de-scale
                 self.interpreter.set_tensor(input["index"], im)
                 self.interpreter.invoke()
+                # (+) -> add by billy: for get middle layers output of TFLite
+                # 获取模型中每层的张量数值
+                with open('D:/billy/repo/yolov5/middle_layers_output_of_TFLite.txt', 'w') as f:
+                    np.set_printoptions(threshold=np.inf)
+                    for layer in self.interpreter.get_tensor_details():
+                        f.write(f"name: {layer['name']}, index/location: {layer['index']} \n")
+                        f.write("Tensor Value:\n")
+                        f.write(np.array2string(self.interpreter.get_tensor(layer['index']), precision=2, separator=',', suppress_small=True))  # 保留张量的维度输出
+                        f.write("\n\n")
+                # <- (+) add by billy
                 y = []
                 for output in self.output_details:
                     x = self.interpreter.get_tensor(output["index"])
