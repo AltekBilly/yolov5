@@ -11,7 +11,7 @@ param (
         env_name   = "yolov5"
         proj_name  = "yolov5_face_m1"
         weights    = "D:\billy\repo\yolov5\runs\yolov5_face_m1\yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160\weights\best.pt"
-        epochs     = 600
+        epochs     = 1000
         imgsz      = 160
         batch_size = 256
         evolve     = 0

@@ -37,7 +37,11 @@ import torch.nn as nn
 import yaml
 from torch.optim import lr_scheduler
 from tqdm import tqdm
+import copy
 
+# 获取PyTorch的版本号
+# version = torch.__version__
+# major_version, minor_version, _ = [int(v) for v in version.split('.')[:3]]
 # (+) -> add by billy: for fuse
 def is_fused_itm(module):
     if module.__module__ in ['torch.nn.modules.conv', 'torch.nn.modules.batchnorm', 'torch.nn.modules.activation']:
@@ -45,34 +49,66 @@ def is_fused_itm(module):
     return False
 
 def get_fuse_module(model):
-    sub_module_dict = {}
-    for name, module in model.named_modules():
-        module_name_structs = name.split('.')
-        if is_fused_itm(module):
-            # print(name, module)
-            sub_module_name = ".".join(module_name_structs[0:len(module_name_structs)-1])
-            if not sub_module_name in sub_module_dict:
-                sub_module_dict[sub_module_name] = [(name, module)]
-            else:
-                sub_module_dict[sub_module_name].append((name, module))
+    # sub_module_dict = {}
+    # for name, module in model.named_modules():
+    #     module_name_structs = name.split('.')
+    #     if is_fused_itm(module):
+    #         # print(name, module)
+    #         sub_module_name = ".".join(module_name_structs[0:len(module_name_structs)-1])
+    #         if not sub_module_name in sub_module_dict:
+    #             sub_module_dict[sub_module_name] = [(name, module)]
+    #         else:
+    #             sub_module_dict[sub_module_name].append((name, module))
     
-    fuse_ops = []
-    tmp_fuse_ops = []
-    for name in sub_module_dict.keys():
-        vals = sub_module_dict[name]
-        for n, m in vals:
-            if m.__module__ == 'torch.nn.modules.conv':
-                if len(tmp_fuse_ops) > 1:
-                    fuse_ops.append(tmp_fuse_ops)
-                tmp_fuse_ops = [n]
-            elif m.__module__ == 'torch.nn.modules.batchnorm':
-                tmp_fuse_ops.append(n)
-            elif m.__module__ == 'torch.nn.modules.activation' and m._get_name() == 'ReLU':
-                tmp_fuse_ops.append(n)
+    # fuse_ops = []
+    # tmp_fuse_ops = []
+    # for name in sub_module_dict.keys():
+    #     vals = sub_module_dict[name]
+    #     for n, m in vals:
+    #         if m.__module__ == 'torch.nn.modules.conv':
+    #             if len(tmp_fuse_ops) > 1:
+    #                 fuse_ops.append(tmp_fuse_ops)
+    #             tmp_fuse_ops = [n]
+    #         elif m.__module__ == 'torch.nn.modules.batchnorm':
+    #             tmp_fuse_ops.append(n)
+    #         elif m.__module__ == 'torch.nn.modules.activation' and m._get_name() == 'ReLU':
+    #             tmp_fuse_ops.append(n)
 
-        if len(tmp_fuse_ops) > 1:
-            fuse_ops.append(tmp_fuse_ops)
-        tmp_fuse_ops = []
+    #     if len(tmp_fuse_ops) > 1:
+    #         fuse_ops.append(tmp_fuse_ops)
+    #     tmp_fuse_ops = []
+    fuse_ops = [
+        ['model.0.conv'        , 'model.0.bn'        , 'model.0.act'], 
+        ['model.1.conv'        , 'model.1.bn'        , 'model.1.act'], 
+        ['model.2.cv1.conv'    , 'model.2.cv1.bn'    , 'model.2.cv1.act'], 
+        ['model.2.cv2.conv'    , 'model.2.cv2.bn'    , 'model.2.cv2.act'], 
+        ['model.2.cv3.conv'    , 'model.2.cv3.bn'    , 'model.2.cv3.act'], 
+        ['model.2.m.0.cv1.conv', 'model.2.m.0.cv1.bn', 'model.2.m.0.cv1.act'], 
+        ['model.2.m.0.cv2.conv', 'model.2.m.0.cv2.bn', 'model.2.m.0.cv2.act'], 
+        ['model.3.conv'        , 'model.3.bn'        , 'model.3.act'], 
+        ['model.4.cv1.conv'    , 'model.4.cv1.bn'    , 'model.4.cv1.act'], 
+        ['model.4.cv2.conv'    , 'model.4.cv2.bn'    , 'model.4.cv2.act'], 
+        ['model.4.cv3.conv'    , 'model.4.cv3.bn'    , 'model.4.cv3.act'], 
+        ['model.4.m.0.cv1.conv', 'model.4.m.0.cv1.bn', 'model.4.m.0.cv1.act'], 
+        ['model.4.m.0.cv2.conv', 'model.4.m.0.cv2.bn', 'model.4.m.0.cv2.act'], 
+        ['model.4.m.1.cv1.conv', 'model.4.m.1.cv1.bn', 'model.4.m.1.cv1.act'], 
+        ['model.4.m.1.cv2.conv', 'model.4.m.1.cv2.bn', 'model.4.m.1.cv2.act'], 
+        ['model.5.conv'        , 'model.5.bn'        , 'model.5.act'], 
+        ['model.6.cv1.conv'    , 'model.6.cv1.bn'    , 'model.6.cv1.act'], 
+        ['model.6.cv2.conv'    , 'model.6.cv2.bn'    , 'model.6.cv2.act'], 
+        ['model.6.cv3.conv'    , 'model.6.cv3.bn'    , 'model.6.cv3.act'], 
+        ['model.6.m.0.cv1.conv', 'model.6.m.0.cv1.bn', 'model.6.m.0.cv1.act'], 
+        ['model.6.m.0.cv2.conv', 'model.6.m.0.cv2.bn', 'model.6.m.0.cv2.act'], 
+        ['model.6.m.1.cv1.conv', 'model.6.m.1.cv1.bn', 'model.6.m.1.cv1.act'], 
+        ['model.6.m.1.cv2.conv', 'model.6.m.1.cv2.bn', 'model.6.m.1.cv2.act'], 
+        ['model.6.m.2.cv1.conv', 'model.6.m.2.cv1.bn', 'model.6.m.2.cv1.act'], 
+        ['model.6.m.2.cv2.conv', 'model.6.m.2.cv2.bn', 'model.6.m.2.cv2.act'], 
+        ['model.7.conv'        , 'model.7.bn'        , 'model.7.act'], 
+        ['model.8.cv1.conv'    , 'model.8.cv1.bn'    , 'model.8.cv1.act'], 
+        ['model.8.cv2.conv'    , 'model.8.cv2.bn'    , 'model.8.cv2.act'], 
+        ['model.8.cv3.conv'    , 'model.8.cv3.bn'    , 'model.8.cv3.act'], 
+        ['model.8.m.0.cv1.conv', 'model.8.m.0.cv1.bn', 'model.8.m.0.cv1.act'], 
+        ['model.8.m.0.cv2.conv', 'model.8.m.0.cv2.bn', 'model.8.m.0.cv2.act']]
     return fuse_ops
 # <- (+) add by billy
 
@@ -506,7 +542,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             #     torch.save(ckpt, last)
             if best_fitness == fi:
                 # torch.save(ckpt, best)
-                quant_model = model
+                quant_model = copy.deepcopy(model)
                 # if opt.save_period > 0 and epoch % opt.save_period == 0:
                 #     torch.save(ckpt, w / f"epoch{epoch}.pt")
                 # del ckpt
@@ -572,7 +608,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         opset = 13
 
         _, ts = export_torchscript(quant_model, im, file, False)
-        export_onnx(ts, im, file, opset, False, False)
+        # export_onnx(ts, im, file, opset, False, False)
         # <- (+) add by billy
 
         callbacks.run("on_train_end", last, best, epoch, results)
@@ -920,16 +956,15 @@ def run(**kwargs):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    # opt.weights = " "
+    # opt.weights = " "#"D:/billy/repo/yolov5/runs/yolov5_face_m1/yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160/weights/best.pt"
     # opt.cfg = "./models/yolov5altek.yaml"
-    # opt.data = "/home/BillyHsueh/dataset/face/face.yaml"
-    # opt.hyp = "./data/hyps/hyp.altek.yaml"
-    # opt.epochs = 600 
+    # opt.data = "./data/face_NormalSize-origin-bg-winPC.yaml"
+    # opt.hyp = "./data/hyps/hyp.altek-lr0.01-no_mosaic.yaml"
+    # opt.epochs = 1
     # opt.batch_size = 8
-    # opt.img_size = 640
-    # opt.device = "2"   
-    # opt.workers = 4
-    # opt.name = "face-lr_0.001"
+    # opt.img_size = 160   
+    # opt.workers = 8
+    # opt.name = "fuse-test"
     # opt.exist_ok = True
     # opt.patience = 100 
     main(opt)

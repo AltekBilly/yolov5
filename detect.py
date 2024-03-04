@@ -83,7 +83,7 @@ def _make_grid(yolo5_anchors, yolo5_na, nx=20, ny=20, i=0, torch_1_10=check_vers
 def yolo_decode_box_for_one_tensor(x, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc):
     i=0
     z = []
-    x = x.permute(0, 3, 1, 2).contiguous()
+    x = x.permute(0, 3, 1, 2).contiguous() #ANCHOR - tflite
     bs, _, ny, nx = x.shape
     x = x.view(bs, yolo5_na, yolo5_no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
     if yolo5_grid[i].shape[2:4] != x.shape[2:4]:
@@ -382,11 +382,11 @@ def main(opt):
 if __name__ == "__main__":
     opt = parse_opt()
     opt.weights = 'D:/billy/repo/yolov5/runs/yolov5_face_m1/yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160/weights/best.tflite'
-    opt.source = 'D:/billy/dataset/face/images/bald_2__222.jpg'
+    opt.source = '0'#'D:/billy/dataset/face/20220927_Pantea/images'#/pantea_dist_800mm_pitch_000_yaw_000_roll_000_seq_000.jpg 'D:/billy/dataset/face/images/bald_2__222.jpg'
     opt.data = 'D:/billy/repo/yolov5/data/face_NormalSize-origin-bg-winPC.yaml'
     opt.device ='cpu'
     opt.imgsz = [160, 160]
-    opt.name = 'qat_model_detect'
-    opt.conf_thres = 0.5
+    opt.name = 'camera_0.25'
+    opt.conf_thres = 0.25
 
     main(opt)

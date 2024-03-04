@@ -404,7 +404,7 @@ class DetectMultiBackend(nn.Module):
             LOGGER.info(f"Loading {w} for TorchScript inference...")
             extra_files = {"config.txt": ""}  # model metadata
             model = torch.jit.load(w, _extra_files=extra_files, map_location=device)
-            model.half() if fp16 else model.float()
+            # model.half() if fp16 else model.float() #ANCHOR - qat
             if extra_files["config.txt"]:  # load metadata dict
                 d = json.loads(
                     extra_files["config.txt"],
@@ -639,13 +639,13 @@ class DetectMultiBackend(nn.Module):
                 self.interpreter.invoke()
                 # (+) -> add by billy: for get middle layers output of TFLite
                 # 获取模型中每层的张量数值
-                with open('D:/billy/repo/yolov5/middle_layers_output_of_TFLite.txt', 'w') as f:
-                    np.set_printoptions(threshold=np.inf)
-                    for layer in self.interpreter.get_tensor_details():
-                        f.write(f"name: {layer['name']}, index/location: {layer['index']} \n")
-                        f.write("Tensor Value:\n")
-                        f.write(np.array2string(self.interpreter.get_tensor(layer['index']), precision=2, separator=',', suppress_small=True))  # 保留张量的维度输出
-                        f.write("\n\n")
+                # with open('D:/billy/repo/yolov5/middle_layers_output_of_TFLite.txt', 'w') as f:
+                #     np.set_printoptions(threshold=np.inf)
+                #     for layer in self.interpreter.get_tensor_details():
+                #         f.write(f"name: {layer['name']}, index/location: {layer['index']} \n")
+                #         f.write("Tensor Value:\n")
+                #         f.write(np.array2string(self.interpreter.get_tensor(layer['index']), precision=2, separator=',', suppress_small=True))  # 保留张量的维度输出
+                #         f.write("\n\n")
                 # <- (+) add by billy
                 y = []
                 for output in self.output_details:
@@ -655,7 +655,7 @@ class DetectMultiBackend(nn.Module):
                         x = (x.astype(np.float32) - zero_point) * scale  # re-scale
                     y.append(x)
             y = [x if isinstance(x, np.ndarray) else x.numpy() for x in y]
-            y[0][..., :4] *= [w, h, w, h]  # xywh normalized to pixels
+            # y[0][..., :4] *= [w, h, w, h]  # xywh normalized to pixels #ANCHOR - QAT tflite
 
         if isinstance(y, (list, tuple)):
             return self.from_numpy(y[0]) if len(y) == 1 else [self.from_numpy(x) for x in y]
