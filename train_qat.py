@@ -279,7 +279,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     imgsz = check_img_size(opt.imgsz, gs, floor=gs * 2)  # verify imgsz is gs-multiple
 
     # (+) -> add by billy: fx qat
-    model.qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
+    model.model.qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
     fuse_ops = get_fuse_module(model)
     model = torch.quantization.fuse_modules(model.eval(), fuse_ops)
     model = torch.quantization.prepare_qat(model.train())
@@ -601,6 +601,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                         setattr(m, "anchor_grid", [torch.zeros(1)] * m.nl)
                     print("Detect.quant_export: ", m.quant_export())
         im = torch.randn(1, 3, 160, 160).cpu()
+        im = torch.quantize_per_tensor(im, scale=1/255, zero_point=0, dtype=torch.quint8) #ANCHOR - quant
         # traced = torch.jit.trace(quant_model, im)
         from export import export_onnx, export_torchscript
         from utils.general import url2file

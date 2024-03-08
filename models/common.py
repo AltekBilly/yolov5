@@ -404,7 +404,7 @@ class DetectMultiBackend(nn.Module):
             LOGGER.info(f"Loading {w} for TorchScript inference...")
             extra_files = {"config.txt": ""}  # model metadata
             model = torch.jit.load(w, _extra_files=extra_files, map_location=device)
-            # model.half() if fp16 else model.float() #ANCHOR - qat
+            # model.half() if fp16 else model.float() # ANCHOR - qat
             if extra_files["config.txt"]:  # load metadata dict
                 d = json.loads(
                     extra_files["config.txt"],
@@ -632,9 +632,11 @@ class DetectMultiBackend(nn.Module):
             else:  # Lite or Edge TPU
                 input = self.input_details[0]
                 int8 = input["dtype"] == np.uint8  # is TFLite quantized uint8 model
-                if int8:
-                    scale, zero_point = input["quantization"]
-                    im = (im / scale + zero_point).astype(np.uint8)  # de-scale
+                # (-) -> comment out by billy: for altek tflite format
+                # if int8:
+                #     scale, zero_point = input["quantization"]
+                #     im = (im / scale + zero_point).astype(np.uint8)  # de-scale
+                # <- (-) comment out by billy
                 self.interpreter.set_tensor(input["index"], im)
                 self.interpreter.invoke()
                 # (+) -> add by billy: for get middle layers output of TFLite

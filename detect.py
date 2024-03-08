@@ -83,7 +83,6 @@ def _make_grid(yolo5_anchors, yolo5_na, nx=20, ny=20, i=0, torch_1_10=check_vers
 def yolo_decode_box_for_one_tensor(x, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc):
     i=0
     z = []
-    x = x.permute(0, 3, 1, 2).contiguous() #ANCHOR - tflite
     bs, _, ny, nx = x.shape
     x = x.view(bs, yolo5_na, yolo5_no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
     if yolo5_grid[i].shape[2:4] != x.shape[2:4]:
@@ -146,7 +145,11 @@ def run(
     dnn=False,  # use OpenCV DNN for ONNX inference
     vid_stride=1,  # video frame-rate stride
     # (+) -> add by billy
+    decode=False,
+    input_uint8 = False,
+    input_quint8 = False,
     cfg=ROOT /'models/yolov5altek.yaml',
+    altek_tflite = False
     # <- (+) add by billy
 ):
     source = str(source)
@@ -203,8 +206,13 @@ def run(
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
-            im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
-            im /= 255  # 0 - 255 to 0.0 - 1.0
+            # (+/-) -> modify by billy: ckeck type of input image
+            if not input_uint8:
+                im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
+                im /= 255  # 0 - 255 to 0.0 - 1.0
+                if input_quint8:
+                    im = torch.quantize_per_tensor(im, scale=1/255, zero_point=0, dtype=torch.quint8)
+            # <- (+/-) modify by billy
             if len(im.shape) == 3:
                 im = im[None]  # expand for batch dim
             if model.xml and im.shape[0] > 1:
@@ -224,9 +232,11 @@ def run(
             else:
                 pred = model(im, augment=augment, visualize=visualize)
             # (+) -> add by billy: decode
-            if isinstance(pred, list) and len(pred) > 0:
-                pred = yolo_decode_box(pred, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc, device=device)
-            else: # ANCHOR - quat tflite
+            if decode:
+                if altek_tflite:
+                    pred = pred.permute(0, 3, 1, 2).contiguous() #ANCHOR - tflite
+                if input_quint8:
+                    pred = pred.dequantize()
                 pred = yolo_decode_box_for_one_tensor(pred, yolo5_anchors, yolo5_grid, yolo5_anchor_grid, yolo5_na, yolo5_no, yolo5_nc)
             # <- (+) add by billy
         # NMS
@@ -368,6 +378,13 @@ def parse_opt():
     parser.add_argument("--half", action="store_true", help="use FP16 half-precision inference")
     parser.add_argument("--dnn", action="store_true", help="use OpenCV DNN for ONNX inference")
     parser.add_argument("--vid-stride", type=int, default=1, help="video frame-rate stride")
+    # (+) -> add by billy
+    parser.add_argument("--decode", action="store_true", help="decode output feature map of model")
+    parser.add_argument("--input-uint8", action="store_true", help="use uint8 image input model")
+    parser.add_argument("--input-quint8", action="store_true", help="use quint8 image input model")
+    parser.add_argument("--cfg", type=str, default=ROOT /'models/yolov5altek.yaml', help="use cfg to decode feature map")
+    parser.add_argument("--altek-tflite", action="store_true", help="use altek-tflite to inference")
+    # <- (+) add by billy
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
@@ -381,12 +398,19 @@ def main(opt):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    opt.weights = 'D:/billy/repo/yolov5/runs/yolov5_face_m1/yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160/weights/best.tflite'
-    opt.source = '0'#'D:/billy/dataset/face/20220927_Pantea/images'#/pantea_dist_800mm_pitch_000_yaw_000_roll_000_seq_000.jpg 'D:/billy/dataset/face/images/bald_2__222.jpg'
+    opt.weights = 'D:/billy/repo/yolov5/runs/yolov5_face_m1/yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160/weights/best-20240305.tflite'
+    opt.source =  'D:/billy/dataset/face/images/bald_2__222.jpg' #'D:/billy/dataset/face/20220927_Pantea/images/pantea_dist_800mm_pitch_000_yaw_000_roll_000_seq_000.jpg' 
     opt.data = 'D:/billy/repo/yolov5/data/face_NormalSize-origin-bg-winPC.yaml'
     opt.device ='cpu'
     opt.imgsz = [160, 160]
-    opt.name = 'camera_0.25'
-    opt.conf_thres = 0.25
+    opt.name = 'test_0.5'
+    opt.conf_thres = 0.5
+    opt.exist_ok = True
+    # opt.save_txt = True
+
+    opt.decode = True
+    opt.input_uint8 = True
+    # opt.input_quint8 = True
+    opt.altek_tflite = True
 
     main(opt)

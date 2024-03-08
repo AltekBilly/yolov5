@@ -97,8 +97,8 @@ class Detect(nn.Module):
         z = []  # inference output
         for i in range(self.nl):
             # (+/-) -> modfiy by billy
-            # x[i] = self.m[i](x[i])  # conv
-            x[i] = self.dequant(self.m[i](self.quant(x[i])))  # ANCHOR - qat conv 
+            x[i] = self.m[i](x[i])  # conv
+            # x[i] = self.dequant(self.m[i](self.quant(x[i])))  # ANCHOR - qat conv 
             if self.do_quant: continue                        # ANCHOR - qat
             # <- (+/-) modfiy by billy
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
@@ -174,9 +174,9 @@ class BaseModel(nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            x = x if isinstance(m, Detect) else self.quant(x) # ANCHOR - qat
+            # x = x if isinstance(m, Detect) else self.quant(x) # ANCHOR - qat
             x = m(x)  # run
-            x = x if isinstance(m, Detect) else self.dequant(x) # ANCHOR - qat
+            # x = x if isinstance(m, Detect) else self.dequant(x) # ANCHOR - qat
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
@@ -489,4 +489,6 @@ if __name__ == "__main__":
 
     # (+) -> add by billy
     model.info(img_size=opt.img_size)
+    for module in model.model:
+        print(module)
     # <- (+) add by billy
