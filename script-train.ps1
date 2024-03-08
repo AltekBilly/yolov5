@@ -6,14 +6,14 @@ param (
     $TrainingParams = 
     @{
         model      = "yolov5altek"
-        dataset    = "face_OriginSize-bbox20-bg-winPC"
-        hyp_name   = "altek-lr0.01-no_mosaic"
+        dataset    = "face_NormalSize-origin-bg-winPC"
+        hyp_name   = "altek-lr0.01-no_mosaic-deg_45"
         env_name   = "yolov5"
         proj_name  = "yolov5_face_m1"
         weights    = " "
         epochs     = 1000
-        imgsz      = 640
-        batch_size = 32
+        imgsz      = 160
+        batch_size = 256
         evolve     = 0
         workers    = 8
     }
@@ -55,6 +55,7 @@ function RunPython ([hashtable]$params)
         --exist-ok `
         --single-cls `
         --noautoanchor `
+        # --device     'cpu'
         # --resume     $($params["project"] + "\yolov5altek-wood_pallet-20240111-altek\weights\last.pt")
         # --rect `
         # --no-overlap `
