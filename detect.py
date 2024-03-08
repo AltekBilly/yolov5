@@ -381,12 +381,13 @@ def main(opt):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    opt.weights = 'D:/billy/repo/yolov5/runs/yolov5_face_m1/yolov5altek-face_NormalSize-origin-bg-winPC-20240206-altek-lr0.01-no_mosaic-160/weights/best.tflite'
-    opt.source = '0'#'D:/billy/dataset/face/20220927_Pantea/images'#/pantea_dist_800mm_pitch_000_yaw_000_roll_000_seq_000.jpg 'D:/billy/dataset/face/images/bald_2__222.jpg'
-    opt.data = 'D:/billy/repo/yolov5/data/face_NormalSize-origin-bg-winPC.yaml'
+    opt.weights = ROOT / 'best.tflite'
+    opt.source = 'C:/Users/BillyHsueh/Videos/test-hand-henrik.mp4'#'0'
+    opt.data = ROOT / 'data/face_NormalSize-origin-bg-winPC.yaml'
     opt.device ='cpu'
     opt.imgsz = [160, 160]
-    opt.name = 'camera_0.25'
+    opt.name = 'video_0.25'
     opt.conf_thres = 0.25
+    opt.exist_ok = True
 
     main(opt)
