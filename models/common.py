@@ -641,13 +641,13 @@ class DetectMultiBackend(nn.Module):
                 self.interpreter.invoke()
                 # (+) -> add by billy: for get middle layers output of TFLite
                 # 获取模型中每层的张量数值
-                # with open('D:/billy/repo/yolov5/middle_layers_output_of_TFLite.txt', 'w') as f:
-                #     np.set_printoptions(threshold=np.inf)
-                #     for layer in self.interpreter.get_tensor_details():
-                #         f.write(f"name: {layer['name']}, index/location: {layer['index']} \n")
-                #         f.write("Tensor Value:\n")
-                #         f.write(np.array2string(self.interpreter.get_tensor(layer['index']), precision=2, separator=',', suppress_small=True))  # 保留张量的维度输出
-                #         f.write("\n\n")
+                with open('D:/billy/repo/yolov5/middle_layers_output_of_TFLite.txt', 'w') as f:
+                    np.set_printoptions(threshold=np.inf)
+                    for layer in self.interpreter.get_tensor_details():
+                        f.write(f"name: {layer['name']}, index/location: {layer['index']} \n")
+                        f.write("Tensor Value:\n")
+                        f.write(np.array2string(self.interpreter.get_tensor(layer['index']), precision=2, separator=',', suppress_small=True))  # 保留张量的维度输出
+                        f.write("\n\n")
                 # <- (+) add by billy
                 y = []
                 for output in self.output_details:
