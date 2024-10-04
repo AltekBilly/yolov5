@@ -3,7 +3,7 @@
 ./script-train.ps1
 ```
 
-EX: script-train.ps1:
+script-train.ps1:
 ```powershell
 ...
 $TrainingParams =  
