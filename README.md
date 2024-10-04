@@ -87,3 +87,8 @@ D(best.tflite)
 ```
 FaceDetection-20240305.tflite
 ```
+
+# Path of dataset
+```
+/data/AIDATA/raw_data/2F-DATASET/face
+```
