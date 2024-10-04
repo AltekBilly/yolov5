@@ -70,3 +70,20 @@ if __name__ == "__main__":
     opt.altek_tflite = True 
     main(opt) 
 ```
+
+# Training process
+```mermaid
+graph TB
+A[script-train.ps1] 
+-- runs/yolov5_face_m1/name/weights/best.pt --> 
+B[script-train-qat.ps1] 
+-- runs/yolov5_face_m1/name-qat/weights/best.pt --> 
+C[TinyNeuralNetwork]
+--> 
+D(best.tflite)
+```
+
+# The latest version of model.tflite
+```
+FaceDetection-20240305.tflite
+```
