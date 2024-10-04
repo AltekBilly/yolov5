@@ -1,3 +1,13 @@
+# Install
+
+Clone repo and install [requirements.txt](http://192.168.215.101:3000/BillyHsueh/yolov5-altek-FaceDetection/src/branch/billy_branch/requirements.txt) in a [**Python>=3.8.0**](https://www.python.org/) environment, including [**PyTorch>=1.8**](https://pytorch.org/get-started/locally/).
+
+```bash
+git clone https://github.com/ultralytics/yolov5  # clone
+cd yolov5
+pip install -r requirements.txt  # install
+```
+
 # Train 
 ```shell
 ./script-train.ps1
