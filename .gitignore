@@ -55,7 +55,7 @@ VOC/
 *.engine
 *.mlmodel
 *.torchscript
-# *.tflite
+*.tflite
 *.h5
 *_saved_model/
 *_web_model/
