@@ -71,6 +71,12 @@ if __name__ == "__main__":
     main(opt) 
 ```
 
+# Label format
+label.txt: 
+```
+[cls_index] [bbox_center_x] [bbox_center_y] [bbox_w] [bbox_h]
+```
+
 # Training process
 ```mermaid
 graph TB
